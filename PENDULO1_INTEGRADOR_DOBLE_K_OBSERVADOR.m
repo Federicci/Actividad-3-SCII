@@ -74,6 +74,7 @@ AA2=[A2,zeros(4,1);-C2*A2, 1];
 BB2=[B2;-C2*B2];
 CC2=[C2 0];
 
+QQ2=1*diag([1/1 1 1/0.1 1/0.2 .01]);    RR2=1e7;
 QQ2=1*diag([1/10 1 1/0.1 1/0.2 .01]);    RR2=1e8;
 
 [KK2,S,polos_LC2]=dlqr(AA2,BB2,QQ2,RR2);
@@ -83,9 +84,21 @@ eig(AA2-BB2*KK2)
 K2=KK2(1:4);
 Ki2=-KK2(5);
 
+%Calculo del observador
+Q0=[C; C*A; C*A^2; C*A^3];
+rank(Q0) %=4, m=4 -> es observable
+
+C_o=B';
+A_o=A';
+B_o=C';
+
+Q_o=1*diag([1 1 1 1]);    R_o=1e4;
+[K_o,S_o,polos_o]=dlqr(A_o,B_o,Q_o,R_o);
+polos_o
+
 %Simulación del control:
 
-T=70;
+T=40;
 T_switch=T/2;
 deltat=10^-4;
 Kmax=T/Ts;
@@ -108,6 +121,11 @@ x(3,1)=Ci(3);
 x(4,1)=Ci(4);
 x(5,1)=Ci(5);
 
+x_hat(1,1)=Ci(1);
+x_hat(2,1)=Ci(2);
+x_hat(3,1)=Ci(3);
+x_hat(4,1)=Ci(4);
+
 x_ts=x((1:4),1);
 v_ts=x(5,1);
 ua(1)=0;
@@ -124,7 +142,17 @@ for i=1:1:Kmax+1
         K=K2;
         Ki=Ki2;
     end
-    u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
+    %u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
+    u=-K(2)*x_hat(2)-K(4)*x_hat(4)-K(1)*x_k(1)-K(3)*(x_k(3)-pi)+Ki*v_k; %Solo phi_p y delta_p observados
+    %u=-K(1:4)*(x_hat(1:4))+Ki*v_k; %Todo observado
+    %{
+    if abs(u)<5
+        u=0;
+    else
+        u=sign(u)*(abs(u)-5);
+    end
+    ua=[ua (u+sign(u)*5)*ones(1,round(Ts/deltat))];
+    %}
     ua=[ua u*ones(1,round(Ts/deltat))];
     ys=C*x(1:4,z);
     for j=1:1:Ts/deltat 
@@ -138,6 +166,9 @@ for i=1:1:Kmax+1
         x((1:4),z+1)=x((1:4),z)+deltat*x_p_actual;
         z=z+1;
     end
+    yhat=C*x_hat;
+    e=ys-yhat;
+    x_hat=A*(x_hat)+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C*x_ts;
     x_ts=x((1:4),z);
 end

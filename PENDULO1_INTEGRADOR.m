@@ -55,21 +55,9 @@ eig(AA-BB*KK)
 K=KK(1:4);
 Ki=-KK(5);
 
-%Calculo del observador
-Q0=[C; C*A; C*A^2; C*A^3];
-rank(Q0) %=4, m=4 -> es observable
-
-C_o=B';
-A_o=A';
-B_o=C';
-
-Q_o=1*diag([1 1 1 1]);    R_o=1;
-[K_o,S_o,polos_o]=dlqr(A_o,B_o,Q_o,R_o);
-polos_o
-
 %Simulación del control:
 
-T=60;
+T=70;
 T_switch=T/2;
 deltat=10^-4;
 Kmax=T/Ts;
@@ -91,11 +79,6 @@ x(3,1)=Ci(3);
 x(4,1)=Ci(4);
 x(5,1)=Ci(5);
 
-x_hat(1,1)=Ci(1);
-x_hat(2,1)=Ci(2);
-x_hat(3,1)=Ci(3);
-x_hat(4,1)=Ci(4);
-
 x_ts=x((1:4),1);
 v_ts=x(5,1);
 ua(1)=0;
@@ -105,17 +88,7 @@ xOP=[0; 0; pi; 0];
 for i=1:1:Kmax+1
     x_k=x_ts;
     v_k=v_ts;
-    u=-K(1:4)*x_k(1:4)+Ki*v_k; %Sin observador
-    %u=-K(1)*x_hat(1)-K(2:3)*x_k(2:3)+Ki*v_k; %Solo corriente observada
-    %u=-K(1:3)*x_hat(1:3)+Ki*v_k; %Todo observado
-    %{
-    if abs(u)<5
-        u=0;
-    else
-        u=sign(u)*(abs(u)-5);
-    end
-    ua=[ua (u+sign(u)*5)*ones(1,round(Ts/deltat))];
-    %}
+    u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
     ua=[ua u*ones(1,round(Ts/deltat))];
     ys=C*x(1:4,z);
     for j=1:1:Ts/deltat 
@@ -129,9 +102,6 @@ for i=1:1:Kmax+1
         x((1:4),z+1)=x((1:4),z)+deltat*x_p_actual;
         z=z+1;
     end
-    yhat=C*x_hat;
-    e=ys-yhat;
-    x_hat=A*x_hat+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C*x_ts;
     x_ts=x((1:4),z);
 end
