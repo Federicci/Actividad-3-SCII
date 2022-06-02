@@ -5,7 +5,7 @@ clc, clear all, close all;
 %{
 -------------------------------------------------------------------------
                     Comentarios/conclusiones/dudas
-Asi como se mejora con doble controlador, tambiÈn ayuda mucho el rec·lculo
+Asi como se mejora con doble controlador, tambi√©n ayuda mucho el rec√°lculo
 del observador
 -------------------------------------------------------------------------
 %}
@@ -44,7 +44,7 @@ BB=[B;-C*B];
 M_c=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB AA^6*BB];
 rank(M_c) %=6, n=6 -> es controlable
 
-%DiseÒo con LQR del primer controlador por variacion paramÈtrica de la masa
+%Dise√±o con LQR del primer controlador por variacion param√©trica de la masa
 QQ=1*diag([1/15 1 1/0.1 1/0.2 .01 .01]);    RR=1e7;
 
 KK=dlqr(AA,BB,QQ,RR);
@@ -74,7 +74,7 @@ C2=sys_d2.c;
 AA2=[A2,zeros(4,2);-C2*A2, eye(2)];
 BB2=[B2;-C2*B2];
 
-%DiseÒo con LQR del segundo controlador
+%Dise√±o con LQR del segundo controlador
 QQ2=1*diag([1/10 1/10 1/0.1 1/0.2 .1 .1]);    RR2=1e10;
 
 KK2=dlqr(AA2,BB2,QQ2,RR2);
@@ -106,7 +106,7 @@ B_o2=C2';
 Q_o2=1*diag([1 1 1 1]);    R_o2=[5e6 5e4; 5e4 5e6];
 K_o2=dlqr(A_o2,B_o2,Q_o2,R_o2);
 
-%SimulaciÛn del control:
+%Simulaci√≥n del control:
 
 T=80;
 T_switch=T/2;
@@ -170,7 +170,7 @@ for i=1:1:Kmax+1
     end
     
     %u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
-    u=-K(1:4)*(x_hat(1:4))+Ki*v_k+Ki2*v_k2; %Con observador
+    u=-K(1:4)*(x_hat(1:4)-xOP)+Ki*v_k+Ki2*v_k2; %Con observador
     
     %Descomentar para introducir alinealidad al actuador
     %{
@@ -202,7 +202,7 @@ for i=1:1:Kmax+1
         x((1:4),z+1)=x((1:4),z)+deltat*x_p_actual;
         z=z+1;
     end
-    %Observador y actualizaciÛn de estados discretizados
+    %Observador y actualizaci√≥n de estados discretizados
     yhat=C*x_hat;
     e=ys-yhat;
     x_hat=A*(x_hat-xOP)+B*u+K_o'*e;
@@ -237,7 +237,7 @@ hold on;
 grid on;
 plot(t(1:length(ua)),ua,'r'); 
 xlim([0 T]);
-title('AcciÛn de control');
+title('Acci√≥n de control');
 xlabel('Tiempo');
 
 %Planos de fase
@@ -264,6 +264,6 @@ f(end)=1;
 C=zeros(length(x(1,:)),3);
 C(:,3)=f;
 scatter(x(3,:),x(4,:),3,C,'filled')
-title('¡ngulo vs velocidad angular');
-xlabel('¡ngulo');
+title('√Ångulo vs velocidad angular');
+xlabel('√Ångulo');
 ylabel('Velocidad angular');
