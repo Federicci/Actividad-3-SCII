@@ -202,7 +202,7 @@ for i=1:1:Kmax+1
     %Observador y actualización de estados discretizados
     yhat=C*x_hat;
     e=ys-yhat;
-    x_hat=A*(x_hat-xOP)+B*u+K_o'*e;
+    x_hat=A*(x_hat)+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     v_ts2=v_ts+pi-C(2,:)*x_ts;
     x_ts=x((1:4),z);

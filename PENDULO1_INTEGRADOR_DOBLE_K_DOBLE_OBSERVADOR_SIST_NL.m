@@ -108,7 +108,7 @@ K_o2=dlqr(A_o2,B_o2,Q_o2,R_o2);
 
 %Simulación del control:
 
-T=80;
+T=100;
 T_switch=T/2;
 %T_switch=T; %descomentar para simular solo cambio de masa
 deltat=10^-4;
@@ -205,7 +205,7 @@ for i=1:1:Kmax+1
     %Observador y actualización de estados discretizados
     yhat=C*x_hat;
     e=ys-yhat;
-    x_hat=A*(x_hat-xOP)+B*u+K_o'*e;
+    x_hat=A*(x_hat)+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     v_ts2=v_ts+pi-C(2,:)*x_ts;
     x_ts=x((1:4),z);
