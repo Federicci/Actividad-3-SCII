@@ -5,7 +5,9 @@ clc, clear all, close all;
 %{
 -------------------------------------------------------------------------
                     Comentarios/conclusiones/dudas
-
+Con un solo controlador se complica el cambio de masa
+Igualmente el objetivo del trabajo es trabajar solo con observador, este
+fue un código de prueba
 -------------------------------------------------------------------------
 %}
 
@@ -30,7 +32,7 @@ sys_d=c2d(sys,Ts,'zoh');
 
 A=sys_d.a;
 B=sys_d.b;
-C=sys_d.c; %Invariante
+C=sys_d.c;
 
 %Agrego un integrador para trabajar en lazo cerrado
 %Amplio el sistema
@@ -44,14 +46,11 @@ M_c=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB AA^5*BB];
 rank(M_c) %=5, n=5 -> es controlable
 
 %Diseño con LQR
-QQ=1*diag([1/10 1 1/0.1 1/0.2 1]);    RR=1e2;
-QQ=1*diag([1/10 1 1/0.1 1/0.2 .001]);    RR=1e6;
-QQ=1*diag([1/10 1 1/0.1 1/0.2 .01]);    RR=1e7; %este anda muy bien
+QQ=1*diag([1/10 1 1/0.1 1/0.2 .01]);    RR=1e7;
 
-[KK,S,polos_LC]=dlqr(AA,BB,QQ,RR);
+KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
-polos_LC
-eig(AA-BB*KK)
+eig(AA-BB*KK) %polos de lazo cerrado
 K=KK(1:4);
 Ki=-KK(5);
 

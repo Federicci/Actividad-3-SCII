@@ -17,14 +17,13 @@ C_tc=[0 0 0 1];
 D_tc=0;
 %x1=alpha x2=phi x3=phi_p x4=h
 
-Ts=1e-2; %Tiempo de muestreo
 Ts=1e-3; %Tiempo de muestreo
 sys=ss(A_tc,B_tc,C_tc,D_tc);
 sys_d=c2d(sys,Ts,'zoh');
 
 A=sys_d.a;
 B=sys_d.b;
-C=sys_d.c; %Invariante
+C=sys_d.c;
 
 %Agrego un integrador para trabajar a lazo cerrado:
 %Amplio el sistema
@@ -38,18 +37,11 @@ M=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB  AA^5*BB];
 rank(M) %=5, n=5 -> es controlable
 
 %Diseño con LQR
-QQ=1*diag([1/100 1/100 1/100 1/1000 .001]);    RR=1e10;
-QQ=1*diag([1/1000 1/1000 1/1000 1/10000 .0001]);    RR=1e10;
-QQ=1*diag([1/1000 1/100 1/100 1/10000 .001]);    RR=1e8;
-QQ=1*diag([1 1/3 1/10 1/10000 .001]);    RR=1e15;
-QQ=1*diag([1 1/3 1/10 1/10000 .001]);    RR=1e15;
 QQ=1e-15*diag([1 1 1/10 1/100000 .01]);    RR=1;
-%QQ=1*diag([1 1/3 1/10 1/10000 1]);    RR=1e17;
 
-[KK,S,polos_LC]=dlqr(AA,BB,QQ,RR);
+KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
-polos_LC
-eig(AA-BB*KK)
+eig(AA-BB*KK) %polos de lazo cerrado
 K=KK(1:4);
 Ki=-KK(5);
 
@@ -90,6 +82,7 @@ for i=1:1:Kmax+1
     v_ts=v_ts+ref(z)-C*x_ts;
     x_ts=x((1:4),z);
 end
+x(4,:)=x(4,:)+1000*ones(1,length(x(4,:)));
 %%
 figure(1)
 subplot(3,2,1);

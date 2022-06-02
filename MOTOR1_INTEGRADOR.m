@@ -17,7 +17,6 @@ Bm=0;
 Ki=7.49e-3;
 Km=7.53e-3;
 
-Ts=0.5e-2; %Tiempo de muestreo
 Ts=5e-5; %Tiempo de muestreo
 
 Tl=1.15e-3; %Solo para la referencia de pi/2
@@ -32,10 +31,9 @@ sys_d=c2d(sys,Ts,'zoh');
 
 A=sys_d.a;
 B=sys_d.b;
-C=sys_d.c; %Invariante
+C=sys_d.c;
 
-%Agrego un integrador para mejorar el error en estado estacionario por la
-%perturbacion de torque:
+%Agrego un integrador para trabajar a lazo cerrado
 %Amplio el sistema
 
 AA=[A,zeros(3,1);-C*A, 1];
@@ -47,14 +45,11 @@ M=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB];
 rank(M) %=4, n=4 -> es controlable
 
 %Diseño con LQR
-%QQ=1e-5*diag([0.0001 0.7 100 100]);    RR=0.000000001;
-QQ=1*diag([1 1 1000 110]);    RR=0.00000001;
 QQ=1*diag([1 1/1000 1 .2]);    RR=20;
 
-[KK,S,polos_LC]=dlqr(AA,BB,QQ,RR);
+KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
-polos_LC
-eig(AA-BB*KK)
+eig(AA-BB*KK) %polos de lazo cerrado
 K=KK(1:3);
 Ki=-KK(4);
 
@@ -101,9 +96,7 @@ for i=1:1:Kmax+1
 end
 
 %%
-%ref=ref(1:length(t));
-%fTl=fTl(1:length(t));
-figure
+figure(1)
 subplot(2,2,1)
 hold on;
 grid on;

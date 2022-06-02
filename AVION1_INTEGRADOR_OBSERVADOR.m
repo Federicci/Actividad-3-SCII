@@ -17,14 +17,13 @@ C_tc=[0 0 0 1];
 D_tc=0;
 %x1=alpha x2=phi x3=phi_p x4=h
 
-Ts=1e-2; %Tiempo de muestreo
 Ts=1e-3; %Tiempo de muestreo
 sys=ss(A_tc,B_tc,C_tc,D_tc);
 sys_d=c2d(sys,Ts,'zoh');
 
 A=sys_d.a;
 B=sys_d.b;
-C=sys_d.c; %Invariante
+C=sys_d.c;
 
 %Agrego un integrador para trabajar a lazo cerrado:
 %Amplio el sistema
@@ -38,18 +37,11 @@ M=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB  AA^5*BB];
 rank(M) %=5, n=5 -> es controlable
 
 %Diseño con LQR
-QQ=1*diag([1/100 1/100 1/100 1/1000 .001]);    RR=1e10;
-QQ=1*diag([1/1000 1/1000 1/1000 1/10000 .0001]);    RR=1e10;
-QQ=1*diag([1/1000 1/100 1/100 1/10000 .001]);    RR=1e8;
-QQ=1*diag([1 1/3 1/10 1/10000 .001]);    RR=1e15;
-QQ=1*diag([1 1/3 1/10 1/10000 .001]);    RR=1e15;
 QQ=1e-15*diag([1 1 1/10 1/100000 .01]);    RR=1;
-%QQ=1*diag([1 1/3 1/10 1/10000 1]);    RR=1e17;
 
-[KK,S,polos_LC]=dlqr(AA,BB,QQ,RR);
+KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
-polos_LC
-eig(AA-BB*KK)
+eig(AA-BB*KK) %polos de lazo cerrado
 K=KK(1:4);
 Ki=-KK(5);
 
@@ -62,12 +54,11 @@ A_o=A';
 B_o=C';
 
 Q_o=1*diag([1 1 1 1]);    R_o=1;
-[K_o,S_o,polos_o]=dlqr(A_o,B_o,Q_o,R_o);
-polos_o
+K_o=dlqr(A_o,B_o,Q_o,R_o);
 
 %Simulación del control:
 
-T=30;
+T=130;
 deltat=1e-4;
 Kmax=T/Ts;
 pasos=round(T/deltat);
@@ -94,15 +85,15 @@ v_ts=x(5,1);
 ua(1)=0;
 z=1;
 
-error1=0;
-
 for i=1:1:Kmax+1
     x_k=x_ts;
     v_k=v_ts;
+    
     %u=-K*x_k+Ki*v_k; %Sistema sin observador
-    %u=-K(1)*x_hat(1)-K(2:4)*x_k(2:4)+Ki*v_k; %Solo alpha observado
-    u=-K(1:4)*x_hat(1:4)+Ki*v_k; %Todo observado
+    u=-K(1:4)*x_hat(1:4)+Ki*v_k; %Con observador
+    
     ua=[ua u*ones(1,round(Ts/deltat))];
+    
     ys=C*x(1:4,z);
     for j=1:1:Ts/deltat 
         x_p_actual=A_tc*x(1:4,z)+B_tc*u;
@@ -110,13 +101,13 @@ for i=1:1:Kmax+1
         
         z=z+1;
     end
-    error1=[error1 (x(1,z)-x_hat(1))*ones(1,round(Ts/deltat))];
     yhat=C*x_hat;
     e=ys-yhat;
     x_hat=A*x_hat+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C*x_ts;
     x_ts=x((1:4),z);
 end
+x(4,:)=x(4,:)+1000*ones(1,length(x(4,:)));
 %%
 figure(1)
 subplot(3,2,1);
@@ -159,12 +150,3 @@ plot(t(1:length(ua)),ua,'color','r');
 title('Acción de control');
 xlabel('Tiempo');
 xlim([0 T]);
-
-figure
-hold on;
-grid on;
-plot(t(1:length(error1)),error1);
-xlim([0 T]);
-title('Error de observación');
-xlabel('Tiempo');
-ylabel('Alpha real - Alpha observado');

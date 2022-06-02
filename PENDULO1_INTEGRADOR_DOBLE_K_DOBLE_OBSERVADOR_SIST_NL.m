@@ -5,9 +5,8 @@ clc, clear all, close all;
 %{
 -------------------------------------------------------------------------
                     Comentarios/conclusiones/dudas
-Ademas de usar dos controladores, ademas tengo 2 integradores, se miden 2
-salidas
-En este código tambien se analiza el caso con alinealidad
+Asi como se mejora con doble controlador, también ayuda mucho el recálculo
+del observador
 -------------------------------------------------------------------------
 %}
 
@@ -85,6 +84,28 @@ K2=KK2(1:4);
 Ki2=-KK2(5);
 Ki22=-KK2(6);
 
+%Calculo del primer observador, para el primer caso de masa
+Q0=[C; C*A; C*A^2; C*A^3];
+rank(Q0) %=4, m=4 -> es observable
+
+C_o=B';
+A_o=A';
+B_o=C';
+
+Q_o=1*diag([1 10 1 10]);    R_o=[1e4 0; 0 1e4];
+K_o1=dlqr(A_o,B_o,Q_o,R_o);
+
+%Segundo observador, para cuando cambia la masa
+Q0=[C2; C2*A2; C2*A2^2; C2*A2^3];
+rank(Q0) %=4, m=4 -> es observable
+
+C_o2=B2';
+A_o2=A2';
+B_o2=C2';
+
+Q_o2=1*diag([1 1 1 1]);    R_o2=[5e6 5e4; 5e4 5e6];
+K_o2=dlqr(A_o2,B_o2,Q_o2,R_o2);
+
 %Simulación del control:
 
 T=80;
@@ -128,24 +149,28 @@ v_ts2=x(6,1);
 ua(1)=0;
 z=1;
 xOP=[0; 0; pi; 0];
+phi_dd=0;
 
 for i=1:1:Kmax+1
     x_k=x_ts;
     v_k=v_ts;
     v_k2=v_ts2;
     
-    %Dependiendo de la masa a mover, se elige un controlador distinto
+    %Dependiendo de la masa a mover, se elige un controlador y observador distinto
     if m_var(z)<0.5
         K=K1;
         Ki=Ki1;
         Ki2=Ki12;
+        K_o=K_o1;
     else
         K=K2;
         Ki=Ki2;
         Ki2=Ki22;
+        K_o=K_o2;
     end
     
-    u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
+    %u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
+    u=-K(1:4)*(x_hat(1:4))+Ki*v_k+Ki2*v_k2; %Con observador
     
     %Descomentar para introducir alinealidad al actuador
     %{
@@ -165,16 +190,22 @@ for i=1:1:Kmax+1
     ys=C*x(1:4,z); %Salida de dos componentes
     for j=1:1:Ts/deltat
         %Evolucion del sistema en un Ts
-        x_actual=x((1:4),z)-xOP;
+        x_actual=x((1:4),z);
+        delta_dd=(u-Fricc*x_actual(2)-m_var(z)*l*phi_dd*cos(x_actual(3))+m_var(z)*l*sin(x_actual(3))*x_actual(4)^2)/(M+m_var(z));
+        phi_dd=(g*sin(x_actual(3))-delta_dd*cos(x_actual(3)))/l;
         x1_p=x_actual(2);
-        x2_p=-Fricc*x_actual(2)/M-m_var(z)*g*x_actual(3)/M+u/M;
+        x2_p=delta_dd;
         x3_p=x_actual(4);
-        x4_p=-Fricc*x_actual(2)/(l*M)-g*(m_var(z)+M)*x_actual(3)/(l*M)+u/(l*M);
+        x4_p=phi_dd;
         x_p_actual=[x1_p; x2_p; x3_p; x4_p];
         
         x((1:4),z+1)=x((1:4),z)+deltat*x_p_actual;
         z=z+1;
     end
+    %Observador y actualización de estados discretizados
+    yhat=C*x_hat;
+    e=ys-yhat;
+    x_hat=A*(x_hat-xOP)+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     v_ts2=v_ts+pi-C(2,:)*x_ts;
     x_ts=x((1:4),z);
@@ -189,9 +220,9 @@ grid on;
 plot(t(1:length(x(1,:))),x(1,:),'r');
 plot(t(1:length(ref)),ref,'k');
 xlim([0 T]);
-title('Distancia');
+title('Desplazamiento');
 xlabel('Tiempo');
-legend({'Salida','Referencia'},'Location','southeast');
+legend({'Salida','Referencia'},'Location','northeast');
 
 subplot(2,2,2)
 hold on;
@@ -220,8 +251,8 @@ f(end)=1;
 C=zeros(length(x(1,:)),3);
 C(:,3)=f;
 scatter(x(1,:),x(2,:),3,C,'filled')
-title('Distancia vs velocidad');
-xlabel('Distancia');
+title('Desplazamiento vs velocidad');
+xlabel('Desplazamiento');
 ylabel('Velocidad');
 
 subplot(2,1,2);
