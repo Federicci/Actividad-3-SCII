@@ -4,7 +4,7 @@ Códigos correspondientes al desarrollo del informe 3 de la materia Sistemas de 
 
 ***CÓDIGOS FINALES***:
 
-MOTOR1_INTEGRADOR_OBSERVADOR_ZONA_MUERTA: Contempla el control por realimentación de estados con un observador cuando no puede medirse la corriente. También se agrega una alinealidad que puede ser modificada para evaluar el comportamiento del sistema
+MOTOR1_INTEGRADOR_OBSERVADOR_ZONA_MUERTA: Contempla el control por realimentación de estados de un motor de referencia y torque de perturbación variables con un observador cuando no puede medirse la corriente. También se agrega una alinealidad que puede ser modificada para evaluar el comportamiento del sistema
 
 AVION1_INTEGRADOR: Muestra el controlador propuesto para rangos de validez del modelo del cabeceo del avión
 
