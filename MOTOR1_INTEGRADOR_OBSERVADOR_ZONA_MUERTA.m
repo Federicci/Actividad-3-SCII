@@ -17,14 +17,13 @@ Bm=0;
 Ki=7.49e-3;
 Km=7.53e-3;
 
-Ts=5e-5; %Tiempo de muestreo
-%Ts=2.5e-3; %Tiempo de muestreo ideal si no hubiera alinealidad
+Ts=1e-3; %Tiempo de muestreo
 
 Tl=1.15e-3; %Solo para la referencia de pi/2
 
 A=[-Ra/Laa -Km/Laa 0; Ki/J -Bm/J 0; 0 1 0];
 B=[1/Laa; 0; 0];
-C=[0 0 1];
+C=[0 0 1; 0 1 0];
 D=[0];
 
 sys=ss(A,B,C,D);
@@ -37,9 +36,9 @@ C=sys_d.c;
 %Agrego un integrador para trabajar a lazo cerrado
 %Amplio el sistema
 
-AA=[A,zeros(3,1);-C*A, 1];
-BB=[B;-C*B];
-CC=[C 0];
+AA=[A,zeros(3,1);-C(1,:)*A, 1];
+BB=[B;-C(1,:)*B];
+CC=[C(1,:) 0];
 
 %Verifico controlabilidad
 M=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB];
@@ -62,7 +61,8 @@ C_o=B';
 A_o=A';
 B_o=C';
 
-Q_o=1*diag([1 1 1]);    R_o=1;
+Q_o=1*diag([1 1 1]);    R_o=[1 0; 0 1];
+Q_o=1*diag([1 1 1]);    R_o=1e3*[1 0; 0 1];
 K_o=dlqr(A_o,B_o,Q_o,R_o);
 
 %Simulación del control:
@@ -109,7 +109,7 @@ for i=1:1:Kmax+1
         u=sign(u)*(abs(u)-Alin);
     end
     
-    ys=C*x(1:3,z);
+    ys=C*x(1:3,z); %Salida de 2 componentes
     for j=1:1:Ts/deltat 
         ua(z)=uu;
         x1_p=-Ra*x(1,z)/Laa-Km*x(2,z)/Laa+u/Laa;
@@ -123,7 +123,7 @@ for i=1:1:Kmax+1
     yhat=C*x_hat;
     e=ys-yhat;
     x_hat=A*x_hat+B*u+K_o'*e;
-    v_ts=v_ts+ref(z)-C*x_ts;
+    v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     x_ts=x((1:3),z);
 end
 
