@@ -1,5 +1,5 @@
 # Actividad-3-SCII
-IMPORTANTE!!
+**IMPORTANTE!!**
 Códigos correspondientes al desarrollo del informe 3 de la materia Sistemas de control II, control por realimentación de estados En este archivo se detalla la funcionalidad de cada código como orientación. Tomar como finales los códigos que se mencionan AQUÍ, el resto son iteraciones hasta lograr todo lo requerido y pueden no funcionar bien.
 
 ***CÓDIGOS FINALES***:
