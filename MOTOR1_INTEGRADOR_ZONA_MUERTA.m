@@ -74,7 +74,6 @@ x(3,1)=Ci(3);
 x(4,1)=Ci(4);
 x_ts=x((1:3),1);
 v_ts=x(4,1);
-ua(1)=0;
 z=1;
 
 for i=1:1:Kmax+1
@@ -89,9 +88,8 @@ for i=1:1:Kmax+1
         u=sign(u)*(abs(u)-5);
     end
     
-    ua=[ua (u+sign(u)*5)*ones(1,round(Ts/deltat))];
-    
     for j=1:1:Ts/deltat 
+        ua(z)=u;
         x1_p=-Ra*x(1,z)/Laa-Km*x(2,z)/Laa+u/Laa;
         x2_p=Ki*x(1,z)/J-Bm*x(2,z)/J-fTl(z)/J;
         x3_p=x(2,z);

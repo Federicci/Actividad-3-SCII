@@ -65,15 +65,14 @@ x(3,1)=Ci(3);
 x(4,1)=Ci(4);
 x_ts=x((1:4),1);
 v_ts=x(5,1);
-ua(1)=0;
 z=1;
 
 for i=1:1:Kmax+1
     x_k=x_ts;
     v_k=v_ts;
     u=-K*x_k+Ki*v_k;
-    ua=[ua u*ones(1,round(Ts/deltat))];
     for j=1:1:Ts/deltat 
+        ua(z)=u;
         x_p_actual=A_tc*x(1:4,z)+B_tc*u;
         x((1:4),z+1)=x((1:4),z)+deltat*x_p_actual;
         

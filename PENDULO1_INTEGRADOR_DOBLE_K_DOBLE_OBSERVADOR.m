@@ -25,6 +25,7 @@ D_tc=[0; 0];
 %[delta delta_p phi phi_p]
 
 Ts=1e-3; %Tiempo de muestreo
+Ts=1e-2; %Tiempo de muestreo
 
 sys=ss(A_tc,B_tc,C_tc,D_tc);
 sys_d=c2d(sys,Ts,'zoh');
@@ -46,6 +47,7 @@ rank(M_c) %=6, n=6 -> es controlable
 
 %Diseño con LQR del primer controlador por variacion paramétrica de la masa
 QQ=1*diag([1/15 1 1/0.1 1/0.2 .01 .01]);    RR=1e7;
+Q=1*diag([1/10 1 1/0.1 1/0.2 .0001 .0001]);    RR=1e5;
 
 KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
@@ -76,6 +78,7 @@ BB2=[B2;-C2*B2];
 
 %Diseño con LQR del segundo controlador
 QQ2=1*diag([1/10 1/10 1/0.1 1/0.2 .1 .1]);    RR2=1e10;
+QQ2=1*diag([1/10 1/10 1/0.1 1/0.2 .01 .01]);    RR2=1e10;
 
 KK2=dlqr(AA2,BB2,QQ2,RR2);
 %KK=[K -Ki]
@@ -93,6 +96,7 @@ A_o=A';
 B_o=C';
 
 Q_o=1*diag([1 10 1 10]);    R_o=[1e4 0; 0 1e4];
+Q_o=1*diag([1 1 1 1]);    R_o=[1e0 0; 0 1e0];
 K_o1=dlqr(A_o,B_o,Q_o,R_o);
 
 %Segundo observador, para cuando cambia la masa
@@ -110,7 +114,7 @@ K_o2=dlqr(A_o2,B_o2,Q_o2,R_o2);
 
 T=80;
 T_switch=T/2;
-%T_switch=T; %descomentar para simular solo cambio de masa
+T_switch=T; %descomentar para simular solo cambio de masa
 deltat=10^-4;
 Kmax=T/Ts;
 pasos=round(T/deltat);
@@ -137,16 +141,15 @@ x(4,1)=Ci(4);
 x(5,1)=Ci(5);
 x(6,1)=Ci(6);
 
-x_hat(1,1)=Ci(1);
+x_hat(1,1)=0;
 %x_hat(1,1)=Ci(1)+10; %descomentar para simular solo cambio de masa
-x_hat(2,1)=Ci(2);
-x_hat(3,1)=Ci(3);
-x_hat(4,1)=Ci(4);
+x_hat(2,1)=0;
+x_hat(3,1)=0;
+x_hat(4,1)=0;
 
 x_ts=x((1:4),1);
 v_ts=x(5,1);
 v_ts2=x(6,1);
-ua(1)=0;
 z=1;
 xOP=[0; 0; pi; 0];
 
@@ -169,7 +172,7 @@ for i=1:1:Kmax+1
     end
     
     %u=-K(1:4)*(x_k(1:4)-xOP)+Ki*v_k; %Sin observador
-    u=-K(1:4)*(x_hat(1:4))+Ki*v_k+Ki2*v_k2; %Con observador
+    u=-K(1:4)*(x_hat(1:4)-xOP)+Ki*v_k+Ki2*v_k2; %Con observador
     
     %Descomentar para introducir alinealidad al actuador
     %{
@@ -184,10 +187,9 @@ for i=1:1:Kmax+1
     ua=[ua (u+sign(u)*Alin)*ones(1,round(Ts/deltat))];
     %}
     
-    ua=[ua u*ones(1,round(Ts/deltat))]; %Acumulador de accion de control
-    
     ys=C*x(1:4,z); %Salida de dos componentes
     for j=1:1:Ts/deltat
+        ua(z)=u;
         %Evolucion del sistema en un Ts
         x_actual=x((1:4),z)-xOP;
         x1_p=x_actual(2);
@@ -202,7 +204,7 @@ for i=1:1:Kmax+1
     %Observador y actualización de estados discretizados
     yhat=C*x_hat;
     e=ys-yhat;
-    x_hat=A*(x_hat)+B*u+K_o'*e;
+    x_hat=A*(x_hat-xOP)+B*u+K_o'*e;
     v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     v_ts2=v_ts+pi-C(2,:)*x_ts;
     x_ts=x((1:4),z);

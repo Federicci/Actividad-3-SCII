@@ -13,7 +13,7 @@ c=150;
 
 A_tc=[-a a 0 0; 0 0 1 0; w^2 -w^2 0 0; c 0 0 0];
 B_tc=[0; 0; b*w^2; 0];
-C_tc=[0 0 0 1];
+C_tc=[0 0 0 1; 1 0 0 0];
 D_tc=0;
 %x1=alpha x2=phi x3=phi_p x4=h
 
@@ -28,9 +28,9 @@ C=sys_d.c;
 %Agrego un integrador para trabajar a lazo cerrado:
 %Amplio el sistema
 
-AA=[A,zeros(4,1);-C*A, 1];
-BB=[B;-C*B];
-CC=[C 0];
+AA=[A,zeros(4,1);-C(1,:)*A, eye(1)];
+BB=[B;-C(1,:)*B];
+CC=[C(1,:) zeros(1,1)];
 
 %Verifico controlabilidad
 M=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB  AA^5*BB];
@@ -53,7 +53,7 @@ C_o=B';
 A_o=A';
 B_o=C';
 
-Q_o=1*diag([1 1 1 1]);    R_o=1;
+Q_o=1*diag([1 1 1 1]);    R_o=[1 0; 0 1];
 K_o=dlqr(A_o,B_o,Q_o,R_o);
 
 %Simulación del control:
@@ -91,7 +91,7 @@ for i=1:1:Kmax+1
     %u=-K*x_k+Ki*v_k; %Sistema sin observador
     u=-K(1:4)*x_hat(1:4)+Ki*v_k; %Con observador
     
-    ys=C*x(1:4,z);
+    ys=C*x(1:4,z); %Salida de dos componentes
     for j=1:1:Ts/deltat 
         ua(z)=u;
         x_p_actual=A_tc*x(1:4,z)+B_tc*u;
@@ -102,7 +102,7 @@ for i=1:1:Kmax+1
     yhat=C*x_hat;
     e=ys-yhat;
     x_hat=A*x_hat+B*u+K_o'*e;
-    v_ts=v_ts+ref(z)-C*x_ts;
+    v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     x_ts=x((1:4),z);
 end
 x(4,:)=x(4,:)+1000*ones(1,length(x(4,:)));

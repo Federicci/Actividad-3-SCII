@@ -18,6 +18,7 @@ Ki=7.49e-3;
 Km=7.53e-3;
 
 Ts=5e-5; %Tiempo de muestreo
+%Ts=2.5e-3; %Tiempo de muestreo ideal si no hubiera alinealidad
 
 Tl=1.15e-3; %Solo para la referencia de pi/2
 
@@ -91,7 +92,6 @@ x_hat(3,1)=Ci(3);
 
 x_ts=x((1:3),1);
 v_ts=x(4,1);
-ua(1)=0;
 z=1;
 
 for i=1:1:Kmax+1
@@ -99,18 +99,19 @@ for i=1:1:Kmax+1
     v_k=v_ts;
     %u=-K(1:3)*x_k(1:3)+Ki*v_k; %Sin observador
     u=-K(1:3)*x_hat(1:3)+Ki*v_k; %Con observador
+    uu=u;
     
     %Alinealidad
-    if abs(u)<5
+    Alin=5;
+    if abs(u)<Alin
         u=0;
     else
-        u=sign(u)*(abs(u)-5);
+        u=sign(u)*(abs(u)-Alin);
     end
-    
-    ua=[ua (u+sign(u)*5)*ones(1,round(Ts/deltat))];
     
     ys=C*x(1:3,z);
     for j=1:1:Ts/deltat 
+        ua(z)=uu;
         x1_p=-Ra*x(1,z)/Laa-Km*x(2,z)/Laa+u/Laa;
         x2_p=Ki*x(1,z)/J-Bm*x(2,z)/J-fTl(z)/J;
         x3_p=x(2,z);
@@ -128,14 +129,21 @@ end
 
 %%
 figure(1)
+
 subplot(2,2,1)
 hold on;
 grid on;
 plot(t(1:length(ua)),ua,'r');
+zm=ones(2,length(ua));
+zm(1,:)=zm(1,:)*Alin;
+zm(2,:)=zm(2,:)*-Alin;
+plot(t(1:length(ua)),zm,'k');
 xlim([0 T]);
 title('Acción de control');
 xlabel('Tiempo');
 ylabel('Voltaje');
+legend({'Acción de control','Zona muerta'},'Location','northeast');
+
 subplot(2,2,2)
 hold on;
 grid on;
@@ -143,6 +151,7 @@ plot(t(1:length(x(1,:))),x(1,:),'r');
 xlim([0 T]);
 title('Corriente');
 xlabel('Tiempo');
+
 subplot(2,2,[3,4])
 hold on;
 grid on;

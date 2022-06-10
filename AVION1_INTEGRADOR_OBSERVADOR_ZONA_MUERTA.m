@@ -13,7 +13,7 @@ c=150;
 
 A_tc=[-a a 0 0; 0 0 1 0; w^2 -w^2 0 0; c 0 0 0];
 B_tc=[0; 0; b*w^2; 0];
-C_tc=[0 0 0 1];
+C_tc=[0 0 0 1; 1 0 0 0];
 D_tc=0;
 %x1=alpha x2=phi x3=phi_p x4=h
 
@@ -28,9 +28,9 @@ C=sys_d.c;
 %Agrego un integrador para trabajar a lazo cerrado:
 %Amplio el sistema
 
-AA=[A,zeros(4,1);-C*A, 1];
-BB=[B;-C*B];
-CC=[C 0];
+AA=[A,zeros(4,1);-C(1,:)*A, eye(1)];
+BB=[B;-C(1,:)*B];
+CC=[C(1,:) zeros(1,1)];
 
 %Verifico controlabilidad
 M=[BB AA*BB AA^2*BB AA^3*BB AA^4*BB  AA^5*BB];
@@ -53,12 +53,12 @@ C_o=B';
 A_o=A';
 B_o=C';
 
-Q_o=1*diag([1 1 1 1]);    R_o=1;
+Q_o=1*diag([1 1 1 1]);    R_o=[1 0; 0 1];
 K_o=dlqr(A_o,B_o,Q_o,R_o);
 
 %Simulación del control:
 
-T=130;
+T=200;
 deltat=1e-4;
 Kmax=T/Ts;
 pasos=round(T/deltat);
@@ -82,28 +82,27 @@ x_hat(4,1)=Ci(4);
 
 x_ts=x((1:4),1);
 v_ts=x(5,1);
-ua(1)=0;
 z=1;
 
 for i=1:1:Kmax+1
     x_k=x_ts;
     v_k=v_ts;
-    %u=-K*x_k+Ki*v_k; %Sin observador
+    
+    %u=-K*x_k+Ki*v_k; %Sistema sin observador
     u=-K(1:4)*x_hat(1:4)+Ki*v_k; %Con observador
+    uu=u;
     
     %Alinealidad
-    %Se tuvo que cambiar a max 0.05, si no no anda, el sistema es muy lento.
-    Alin=0.05;
+    Alin=0.001;
     if abs(u)<Alin
         u=0;
     else
         u=sign(u)*(abs(u)-Alin);
     end
     
-    ua=[ua (u+sign(u)*Alin)*ones(1,round(Ts/deltat))];
-    
-    ys=C*x(1:4,z);
+    ys=C*x(1:4,z); %Salida de dos componentes
     for j=1:1:Ts/deltat 
+        ua(z)=uu;
         x_p_actual=A_tc*x(1:4,z)+B_tc*u;
         x((1:4),z+1)=x((1:4),z)+deltat*x_p_actual;
         
@@ -112,7 +111,7 @@ for i=1:1:Kmax+1
     yhat=C*x_hat;
     e=ys-yhat;
     x_hat=A*x_hat+B*u+K_o'*e;
-    v_ts=v_ts+ref(z)-C*x_ts;
+    v_ts=v_ts+ref(z)-C(1,:)*x_ts;
     x_ts=x((1:4),z);
 end
 x(4,:)=x(4,:)+1000*ones(1,length(x(4,:)));
@@ -155,6 +154,12 @@ subplot(3,2,[5,6]);
 hold on;
 grid on;
 plot(t(1:length(ua)),ua,'color','r');
+zm=ones(2,length(ua));
+zm(1,:)=zm(1,:)*Alin;
+zm(2,:)=zm(2,:)*-Alin;
+plot(t(1:length(ua)),zm,'k');
 title('Acción de control');
 xlabel('Tiempo');
 xlim([0 T]);
+ylim([-Alin-.3 Alin+.3]);
+legend({'Acción de control','Zona muerta'},'Location','northeast');

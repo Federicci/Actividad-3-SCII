@@ -125,7 +125,6 @@ x_hat(4,1)=Ci(4);
 x_ts=x((1:4),1);
 v_ts=x(5,1);
 v_ts2=x(6,1);
-ua(1)=0;
 z=1;
 xOP=[0; 0; pi; 0];
 
@@ -160,10 +159,9 @@ for i=1:1:Kmax+1
     ua=[ua (u+sign(u)*Alin)*ones(1,round(Ts/deltat))];
     %}
     
-    ua=[ua u*ones(1,round(Ts/deltat))]; %Acumulador de accion de control
-    
     ys=C*x(1:4,z); %Salida de dos componentes
     for j=1:1:Ts/deltat
+        ua(z)=u;
         %Evolucion del sistema en un Ts
         x_actual=x((1:4),z)-xOP;
         x1_p=x_actual(2);
