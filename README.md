@@ -2,7 +2,7 @@
 **IMPORTANTE!!**
 Códigos correspondientes al desarrollo del informe 3 de la materia Sistemas de control II, control por realimentación de estados En este archivo se detalla la funcionalidad de cada código como orientación. Tomar como finales los códigos que se mencionan AQUÍ, el resto son iteraciones hasta lograr todo lo requerido y pueden no funcionar bien.
 
-***CÓDIGOS FINALES***:
+***CÓDIGOS FINALES***
 
 MOTOR1_INTEGRADOR_OBSERVADOR_ZONA_MUERTA: Contempla el control por realimentación de estados de un motor de referencia y torque de perturbación variables con un observador cuando no puede medirse la corriente. También se agrega una alinealidad que puede ser modificada para evaluar el comportamiento del sistema
 
