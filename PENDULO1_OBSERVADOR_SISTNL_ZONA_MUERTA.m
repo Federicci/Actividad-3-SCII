@@ -45,6 +45,7 @@ rank(M_c) %=5, n=5 -> es controlable
 
 %Diseño con LQR del primer controlador por variacion paramétrica de la masa
 QQ=1*diag([.1 1000 1000 .1 .005]);    RR=100;
+QQ=1*diag([.1 1000 1000 .1 .0005]);    RR=100;
 
 KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
@@ -73,6 +74,7 @@ BB2=[B2;-C2(1,:)*B2];
 
 %Diseño con LQR del segundo controlador
 QQ2=1*diag([.1 1000 1000 .1 .005]);    RR2=100;
+QQ2=1*diag([.1 1000 1000 .1 .0005]);    RR2=100;
 
 KK2=dlqr(AA,BB,QQ2,RR2);
 %KK=[K -Ki]
@@ -88,13 +90,13 @@ C_o=B';
 A_o=A';
 B_o=C';
 
-Q_o=100*diag([1 100 1000 .1]);    R_o=[1 0; 0 1];
+Q_o=1e2*diag([1 100 1000 .1]);    R_o=[1 0; 0 1];
 K_o=dlqr(A_o,B_o,Q_o,R_o);
 eig(A_o-B_o*K_o) %polos del observador
 
 %Simulación del control:
 
-T=100;
+T=120;
 T_switch=T/2;
 %T_switch=T; %descomentar para simular solo cambio de masa
 deltat=10^-4;
@@ -155,7 +157,7 @@ for i=1:1:Kmax+1
     %Descomentar para introducir alinealidad al actuador
     
     %Alinealidad
-    Alin=0.5;
+    Alin=0.3;
     if abs(u)<Alin
         u=0;
     else

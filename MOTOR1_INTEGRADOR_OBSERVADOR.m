@@ -18,6 +18,7 @@ Ki=7.49e-3;
 Km=7.53e-3;
 
 Ts=5e-5; %Tiempo de muestreo
+Ts=1e-3; %Tiempo de muestreo
 
 Tl=1.15e-3; %Solo para la referencia de pi/2
 

@@ -18,6 +18,7 @@ D_tc=0;
 %x1=alpha x2=phi x3=phi_p x4=h
 
 Ts=1e-3; %Tiempo de muestreo
+Ts=1e-1; %Tiempo de muestreo
 sys=ss(A_tc,B_tc,C_tc,D_tc);
 sys_d=c2d(sys,Ts,'zoh');
 
@@ -38,6 +39,7 @@ rank(M) %=5, n=5 -> es controlable
 
 %Diseño con LQR
 QQ=1e-15*diag([1 1 1/10 1/100000 .01]);    RR=1;
+QQ=1e-15*diag([1 1 1/10 1/100000 500]);    RR=1;
 
 KK=dlqr(AA,BB,QQ,RR);
 %KK=[K -Ki]
@@ -88,10 +90,12 @@ subplot(3,2,1);
 grid on;
 hold on;
 plot(t(1:length(x(4,:))),x(4,:),'color','r');
-plot(t(1:length(ref)),ref,'k');
+plot(t(1:length(ref)),ref+1000,'k');
 title('Altura');
 xlabel('Tiempo');
 xlim([0 T]);
+ylim([0 2000]);
+legend({'Salida','Referencia'},'Location','southeast');
 
 subplot(3,2,2);
 hold on;
